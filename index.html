@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Аринка: История Выздоровления 5.0</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-light">
+
+<!-- ===== ПРИВЕТСТВИЕ ===== -->
+<div id="welcome-screen">
+  <div class="welcome-sparkles">
+    <span>✨</span><span>🌸</span><span>✨</span><span>💫</span><span>🌸</span><span>✨</span>
+  </div>
+  <div class="welcome-content">
+    <div class="welcome-emoji" id="welcome-emoji" onclick="tapWelcome()">
+  <span id="welcome-emoji-txt">👩‍⚕️</span>
+  <img id="doctor-photo" src="welcome_doctor.jpg" alt="Доктор" style="display:none">
+</div>
+    <h1>Аринка</h1>
+    <p class="welcome-sub">🌸 История выздоровления 🌸</p>
+    <p class="welcome-tag">Одна ранка. Один герой. 30 глав заботы.</p>
+    <div class="loading-dots"><span>.</span><span>.</span><span>.</span></div>
+    <button class="welcome-btn" onclick="closeWelcome()">▶ Играть</button>
+    <p class="welcome-hint">Аринка ждёт тебя</p>
+  </div>
+</div>
+
+<!-- ===== ИГРА ===== -->
+<div id="game-container">
+  <div id="top-bar">
+    <div class="stat-pill" id="pill-coins" onclick="tapCoins()">🪙 <span id="ui-coins">0</span></div>
+    <div class="stat-pill">💎 <span id="ui-crystals">0</span></div>
+    <div class="stat-pill">💝 <span id="ui-care">0</span></div>
+    <div class="stat-pill">⚡ <span id="ui-energy">10</span>/<span id="ui-maxenergy">10</span></div>
+    <div class="stat-pill">📖 <span id="ui-chapter">1</span></div>
+  </div>
+
+  <div id="main-area">
+    <div id="petals-layer"></div>
+
+    <!-- МЕНЮ -->
+    <div id="screen-menu" class="screen active">
+      <div id="urgent-banner" class="urgent-banner" style="display:none" onclick="playUrgent()">
+        <span>🚨 Срочный вызов!</span>
+        <b id="urgent-timer"></b>
+      </div>
+      <div class="menu-header">
+        <div class="avatar-wrap">
+          <div class="avatar-img">
+  <span class="avatar-emoji" id="ui-avatar">👧</span>
+  <img id="avatar-photo" src="arina.jpg" alt="Аринка" style="display:none">
+</div>
+          <span class="avatar-bow" id="ui-bow">🎀</span>
+          <span class="menu-cat" onclick="tapCat()">🐱</span>
+        </div>
+        <div class="avatar-shadow" onclick="tapShadow()"></div>
+        <h1 class="title-glow">Аринка</h1>
+        <p id="ui-level-text">Уровень 1</p>
+        <div class="exp-bar"><div id="ui-exp-fill" class="exp-fill"></div></div>
+      </div>
+      <div class="menu-grid">
+        <button class="main-btn full" onclick="startStory()">▶️ Продолжить сюжет</button>
+        <button class="main-btn secondary full" id="btn-rest" onclick="claimRest()">💤 Отдохнуть</button>
+        <button class="main-btn secondary" onclick="showMinigames()">🎮 Мини-игры</button>
+        <button class="main-btn warning" onclick="showScreen('screen-daily')">📅 Задания</button>
+        <button class="main-btn success" onclick="openShop()">🛒 Магазин</button>
+        <button class="main-btn" onclick="showScreen('screen-cabinet')">🏥 Кабинет</button>
+        <button class="main-btn" onclick="showScreen('screen-encyclopedia')">📚 Энциклопедия</button>
+        <button class="main-btn" onclick="showScreen('screen-achievements')">🏆 Достижения</button>
+        <button class="main-btn" onclick="showScreen('screen-rewards')">💝 Награды</button>
+        <button class="main-btn" onclick="showScreen('screen-records')">🥇 Рекорды</button>
+        <button class="main-btn" onclick="showScreen('screen-friends')">💌 Друзья</button>
+        <button class="main-btn" onclick="showScreen('screen-stats')">📊 Статистика</button>
+        <button class="main-btn" onclick="showScreen('screen-settings')">⚙️ Настройки</button>
+      </div>
+    </div>
+
+    <!-- ДИАЛОГИ -->
+    <div id="screen-dialog" class="screen">
+      <div class="dialog-bg" id="dialog-bg">
+        <div class="plx-layer plx-sky"></div>
+        <div class="plx-layer plx-clouds" id="plx-clouds">
+          <span style="left:8%;top:12%">☁️</span>
+          <span style="left:42%;top:6%">☁️</span>
+          <span style="left:72%;top:16%">☁️</span>
+        </div>
+        <div class="plx-layer plx-flowers" id="plx-flowers">
+          <span>🌷</span><span>🌿</span><span>🌷</span><span>🌿</span><span>🌷</span><span>🌿</span>
+        </div>
+        <div class="character" id="char-emoji">👧</div>
+      </div>
+      <div class="dialog-box">
+        <div class="speaker" id="dialog-name">Аринка</div>
+        <p class="dialog-text" id="dialog-text">...</p>
+        <div id="dialog-choices" class="choices-container" style="display:none;"></div>
+        <button class="main-btn" id="btn-next-dialog" onclick="nextDialog()">Далее ➔</button>
+      </div>
+    </div>
+
+    <!-- ИГРА -->
+    <div id="screen-game" class="screen">
+      <div class="hud">
+        <button class="back-btn" onclick="abortMinigame()">← Выход</button>
+        <div class="hud-stats">
+          <div class="hud-item" id="mg-timer">⏱ —</div>
+          <div class="hud-item" id="mg-score">⭐ 0</div>
+        </div>
+        <button class="back-btn skip-btn" onclick="skipMinigame()">💊 Пропустить</button>
+      </div>
+      <div id="minigame-container"></div>
+    </div>
+
+    <!-- РЕЗУЛЬТАТ -->
+    <div id="screen-result" class="screen">
+      <div class="end-content">
+        <h1 id="result-title">Успех!</h1>
+        <p id="result-text">Ты справилась.</p>
+        <div class="end-stats">
+          <p>Награда: 🪙 <span id="result-coins">0</span></p>
+          <p>Опыт: <span id="result-exp">0</span></p>
+          <p id="result-care-line" style="display:none">Очки заботы: 💝 <span id="result-care">0</span></p>
+        </div>
+        <button class="main-btn" id="btn-result-story" style="display:none" onclick="startStory()">Продолжить сюжет ➔</button>
+        <button class="main-btn secondary" id="btn-result-replay" style="display:none" onclick="replayMinigame()">🔁 Ещё раз</button>
+        <button class="main-btn" onclick="goToMenu()">В меню</button>
+      </div>
+    </div>
+
+    <!-- КАБИНЕТ -->
+    <div id="screen-cabinet" class="screen">
+      <div class="hud"><button class="back-btn" onclick="goToMenu()">← Назад</button></div>
+      <h2 class="screen-title">🏥 Кабинет Арины</h2>
+      <div class="cabinet-card">
+        <h3>🩹 Состояние руки</h3>
+        <div class="hand-frame">
+          <img id="hand-img" src="hand_bandaged.png" alt="Рука Арины">
+          <div id="hand-fallback">🤕</div>
+        </div>
+        <p id="hand-desc"></p>
+        <h3 id="health-badge" class="badge"></h3>
+        <p id="health-desc"></p>
+        <div class="cabinet-progress">
+          <div class="exp-bar big"><div id="cabinet-fill" class="exp-fill"></div></div>
+          <p id="cabinet-progress-text"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- МАГАЗИН -->
+    <div id="screen-shop" class="screen">
+      <div class="hud"><button class="back-btn" onclick="goToMenu()">← Назад</button></div>
+      <h2 class="screen-title">👨‍⚕️ Доктор Плюшкин</h2>
+      <p class="subtitle">Здравствуй! Чем сегодня займёмся?</p>
+      <div class="shop-tabs">
+        <button class="tab-btn active" id="tab-up" onclick="setShopTab('up')">Улучшения</button>
+        <button class="tab-btn" id="tab-boost" onclick="setShopTab('boost')">Бустеры</button>
+        <button class="tab-btn" id="tab-packs" onclick="setShopTab('packs')">Наборы</button>
+      </div>
+      <div class="shop-list" id="shop-list"></div>
+    </div>
+
+    <!-- ЗАДАНИЯ -->
+    <div id="screen-daily" class="screen">
+      <div class="hud"><button class="back-btn" onclick="goToMenu()">← Назад</button></div>
+      <h2 class="screen-title">Задания от мамы 👩</h2>
+      <div class="streak-card">
+        <h3>🔥 Стрик: <span id="ui-streak">0</span> дней · рекорд: <span id="ui-best-streak">0</span></h3>
+        <div class="gift-line" id="gift-info"></div>
+        <button class="main-btn small success" id="gift-btn" onclick="claimGift()">🎁 Забрать подарок</button>
+      </div>
+      <h3 class="settings-sub">📋 Задания на сегодня</h3>
+      <div id="daily-tasks-list" class="tasks-list"></div>
+    </div>
+
+    <!-- ДОСТИЖЕНИЯ -->
+    <div id="screen-achievements" class="screen">
+      <div class="hud"><button class="back-btn" onclick="goToMenu()">← Назад</button></div>
+      <h2 class="screen-title">Достижения 🏆</h2>
+      <div class="achievements-list" id="achievements-list"></div>
+    </div>
+
+    <!-- СТАТИСТИКА -->
+    <div id="screen-stats" class="screen">
+      <div class="hud"><button class="back-btn" onclick="goToMenu()">← Назад</button></div>
+      <h2 class="screen-title">Статистика 📊</h2>
+      <div class="stats-card">
+        <p>Сыграно игр: <span id="stat-games">0</span></p>
+        <p>Побеждено бактерий: <span id="stat-bugs">0</span></p>
+        <p>Обработано предметов: <span id="stat-heals">0</span></p>
+        <p>Побед над боссами: <span id="stat-boss">0</span></p>
+        <p>Срочных вызовов: <span id="stat-urgent">0</span></p>
+        <p>Всего заработано: <span id="stat-earned">0</span> 🪙</p>
+      </div>
+      <h3 class="screen-title small-title">🔍 Секреты</h3>
+      <div class="achievements-list" id="secrets-list"></div>
+    </div>
+
+    <!-- НАСТРОЙКИ -->
+    <div id="screen-settings" class="screen">
+      <div class="hud"><button class="back-btn" onclick="goToMenu()">← Назад</button></div>
+      <h2 class="screen-title">Настройки ⚙️</h2>
+      <h3 class="settings-sub">🎨 Темы</h3>
+      <div id="theme-buttons" class="theme-grid"></div>
+      <button class="main-btn" onclick="toggleThemeAuto()" id="auto-theme-btn">🌗 Авто-тема: ВКЛ</button>
+      <h3 class="settings-sub">Твоё имя</h3>
+      <input id="name-input" class="text-input" placeholder="Как тебя зовут?">
+      <button class="main-btn small" onclick="saveName()">Сохранить имя</button>
+      <h3 class="settings-sub">Секретный код</h3>
+      <input id="code-input" class="text-input" placeholder="Введи код (подсказки в статистике)">
+      <button class="main-btn small" onclick="enterCode()">🔓 Ввести код</button>
+      <button class="main-btn" onclick="exportSave()">💾 Экспорт прогресса</button>
+      <button class="main-btn danger" onclick="resetProgress()">🗑 Сбросить прогресс</button>
+    </div>
+
+    <!-- МИНИ-ИГРЫ -->
+    <div id="screen-minigames" class="screen">
+      <div class="hud"><button class="back-btn" onclick="goToMenu()">← Назад</button></div>
+      <h2 class="screen-title">Свободная игра 🎮</h2>
+      <p class="subtitle">Стоит 1 ⚡, при победе вернётся!</p>
+      <div class="menu-grid" id="freeplay-list"></div>
+    </div>
+
+    <!-- ЭНЦИКЛОПЕДИЯ -->
+    <div id="screen-encyclopedia" class="screen">
+      <div class="hud"><button class="back-btn" onclick="goToMenu()">← Назад</button></div>
+      <h2 class="screen-title">Энциклопедия здоровья 📚</h2>
+      <p class="subtitle">Прочитай статью — получи 💝 очко заботы!</p>
+      <div class="achievements-list" id="enc-list"></div>
+    </div>
+
+    <!-- НАГРАДЫ -->
+    <div id="screen-rewards" class="screen">
+      <div class="hud"><button class="back-btn" onclick="goToMenu()">← Назад</button></div>
+      <h2 class="screen-title">Награды заботы 💝</h2>
+      <p class="subtitle">У тебя: <span id="rewards-care">0</span> очков заботы</p>
+      <div class="achievements-list" id="rewards-list"></div>
+    </div>
+
+    <!-- РЕКОРДЫ -->
+    <div id="screen-records" class="screen">
+      <div class="hud"><button class="back-btn" onclick="goToMenu()">← Назад</button></div>
+      <h2 class="screen-title">Таблица рекордов 🥇</h2>
+      <p class="subtitle">Режим «Витамины без конца» — 60 секунд!</p>
+      <div class="achievements-list" id="records-list"></div>
+      <button class="main-btn warning" onclick="startRecord()">🏆 Играть на рекорд</button>
+    </div>
+
+    <!-- ДРУЗЬЯ -->
+    <div id="screen-friends" class="screen">
+      <div class="hud"><button class="back-btn" onclick="goToMenu()">← Назад</button></div>
+      <h2 class="screen-title">Пригласи друга 💌</h2>
+      <div class="stats-card">
+        <p>Твой код друга:</p>
+        <h3 id="ref-code">—</h3>
+        <button class="main-btn small" onclick="copyRef()">📋 Скопировать код</button>
+        <p id="ref-used" style="display:none">✅ Код уже использован. Спасибо, что делишься игрой!</p>
+      </div>
+      <h3 class="settings-sub">Ввести код подруги</h3>
+      <input id="ref-input" class="text-input" placeholder="Например: ARINA-1234">
+      <button class="main-btn small" onclick="submitRef()">🎁 Ввести код (обоим +20 🪙)</button>
+    </div>
+
+  </div>
+
+  <!-- СЛУЖЕБНЫЕ СЛОИ -->
+  <div id="fx-layer"></div>
+  <div id="toast-layer"></div>
+  <div id="modal-layer" onclick="closeModal()"></div>
+</div>
+
+<script src="game.js"></script>
+<audio id="music-a" src="music_day.mp3" preload="auto"></audio>
+<audio id="music-b" src="music_night.mp3" preload="auto"></audio>
+<button class="music-btn" id="music-btn" onclick="toggleMusic()">🔊</button>
+</body>
+</html>
