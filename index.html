@@ -74,6 +74,30 @@
         <button class="main-btn" onclick="showScreen('screen-friends')">💌 Друзья</button>
         <button class="main-btn" onclick="showScreen('screen-stats')">📊 Статистика</button>
         <button class="main-btn" onclick="showScreen('screen-settings')">⚙️ Настройки</button>
+        <button class="main-btn" onclick="showAbout()">ℹ️ О программе</button>
+      </div>
+    </div>
+
+    <!-- О ПРОГРАММЕ -->
+    <div id="screen-about" class="screen">
+      <div class="hud"><button class="back-btn" onclick="goToMenu()">← Назад</button></div>
+      <h2 class="screen-title">О программе ℹ️</h2>
+      <div class="stats-card">
+        <h3>🌸 Аринка: История Выздоровления</h3>
+        <p>Мобильная игра-приключение о смелой девочке Аринке и её пути к выздоровлению. 30 сюжетных глав, 23 мини-игры, боссы, ежедневные задания, секреты, темы и награды за заботу.</p>
+        <p><b>Что внутри:</b></p>
+        <p>• Сюжет о лечении и дружбе — 30 глав<br>
+        • 23 обучающие мини-игры о здоровье<br>
+        • Боссы и срочные вызовы<br>
+        • Магазин, бустеры и улучшения<br>
+        • Энциклопедия здоровья<br>
+        • Достижения, рекорды и секреты<br>
+        • Музыка, темы и подарки каждый день</p>
+        <p><b>Версия:</b> 5.0</p>
+        <p><b>Разработчик и автор идеи:</b> Neymar</p>
+        <p>Нашёл ошибку или есть идея для новой фичи? Пиши прямо разработчику в Telegram — он всегда рад обратной связи:</p>
+        <button class="main-btn small success" onclick="openTelegram()">✉️ Написать в Telegram: @Neymar808</button>
+        <p><small>Игра сделана с любовью для детей и их родителей. Береги себя и своё здоровье! 💖</small></p>
       </div>
     </div>
 
@@ -272,7 +296,6 @@
   <div id="toast-layer"></div>
   <div id="modal-layer" onclick="closeModal()"></div>
 
-  <!-- КНОПКА МУЗЫКИ: теперь внутри игрового контейнера -->
   <button class="music-btn" id="music-btn" onclick="toggleMusic()">🔊</button>
 </div>
 
