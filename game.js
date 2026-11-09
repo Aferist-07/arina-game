@@ -377,7 +377,9 @@ function startStory(){
     showMinigames();
     return;
   }
-  spendEnergy(); /* Исправление: глава теперь честно стоит 1 ⚡ */
+  isStoryMode = true;
+  state.energy--;
+  state.lastEnergyTs = state.lastEnergyTs || Date.now();
   curCh = storyData[state.chapter];
   dialogLines = curCh.lines();
   dialogIdx = 0;
