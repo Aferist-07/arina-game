@@ -62,7 +62,7 @@ function regenEnergy(){
 }
 setInterval(regenEnergy, 20000);
 
-/* Исправление: единая функция траты энергии — сбрасывает таймер регена,
+/* Единая функция траты энергии: сбрасывает таймер регена,
    если энергия была полной, иначе реген «дарил» бы энергию с прошлого раза */
 function spendEnergy(n){
   n = n || 1;
@@ -297,7 +297,7 @@ const storyData = {
     {who:'doctor', text:'Лекарство горькое, но нужное. Договорились принимать?'}],
     choice:{prompt:'Что ответишь доктору?', options:[
       {text:'👍 Буду слушаться!', sub:'Честность лечит. +3 💝', apply:()=>addCare(3)},
-      {text:'🤫 Спрячу таблетку', sub:'Хитрость не лечит. −1 ⚡', apply:()=>{ toast('Хитрость отложила выздоровление…', '😮‍💨'); }}
+      {text:'🤫 Спрячу таблетку', sub:'Хитрость не лечит. −1 ⚡', apply:()=>{ state.energy = Math.max(0, state.energy-1); toast('Хитрость отложила выздоровление…', '😮‍💨'); }}
     ]}},
   13:{lines:()=>[
     {who:'arina', text:'В школе будут спрашивать про здоровье. Потренируемся?'},
@@ -376,9 +376,8 @@ function startStory(){
     showMinigames();
     return;
   }
-  isStoryMode = true;                     /* Исправление: сюжетный режим включается */
-  state.energy--;                          /* Исправление: глава стоит 1 ⚡ */
-  state.lastEnergyTs = state.lastEnergyTs || Date.now();
+  isStoryMode = true; /* глава теперь честно стоит 1 ⚡ */
+  spendEnergy();
   curCh = storyData[state.chapter];
   dialogLines = curCh.lines();
   dialogIdx = 0;
@@ -421,7 +420,7 @@ function renderChoices(){
     btn.innerHTML = op.text + '<small>' + op.sub + '</small>';
     btn.onclick = ()=>{
       op.apply();
-      /* Исправление: энергию уже сняли в startStory — двойного списания больше нет */
+      /* Энергия уже списана в startStory — двойного списания нет */
       if(state.chapter >= 30){ finishStory(); }
       else { state.chapter++; progressTask('chapter', 1); }
       checkAchievements();
@@ -458,7 +457,7 @@ function initParallax(){
 
 /* =================== ЯДРО МИНИ-ИГР =================== */
 let activeTimer = null, activeIntervals = [], mgActive = false;
-/* Исправление: добавлена lastWasStory — помнит, что проигранная игра была сюжетной */
+/* lastWasStory — помнит, что проигранная игра была сюжетной (для кнопки «Ещё раз») */
 let lastMg = null, isStoryMode = false, bossMode = false, urgentRun = false, lastWasStory = false;
 let sliderActive = false, breathActive = false, breathRaf = null;
 
@@ -466,7 +465,7 @@ function cleanupMinigame(){
   if(activeTimer) cancelAnimationFrame(activeTimer);
   activeIntervals.forEach(i=>clearInterval(i));
   activeIntervals = []; activeTimer = null; mgActive = false;
-  /* Исправление: ползунок и дыхание больше не «живут» после выхода из игры */
+  /* Ползунок и дыхание не «живут» после выхода из игры */
   sliderActive = false;
   breathActive = false;
   if(breathRaf){ cancelAnimationFrame(breathRaf); breathRaf = null; }
@@ -515,10 +514,13 @@ function endGame(win, text, coins, exp, care){
       state.energy = Math.min(state.maxEnergy, state.energy + 1);
     }
   } else dustBurst();
+  /* Срочный вызов: после победы баннер снимается сразу, после неудачи
+     он остаётся до конца времени (таймер ниже сам его спрячет) */
   if(urgentRun){
     if(win){
       state.stats.urgentDone++;
       state.urgent.end = 0;
+      saveGame();
       state.energy = Math.min(state.maxEnergy, state.energy + 2);
       toast('Срочный вызов выполнен! +2 ⚡', '🚨');
     }
@@ -527,14 +529,14 @@ function endGame(win, text, coins, exp, care){
   }
   checkAchievements();
   updateUI();
-  $('result-title').textContent = win ? 'Победа!' : 'Не вышlo';
+  $('result-title').textContent = win ? 'Победа!' : 'Не вышло';
   $('result-title').style.color = win ? 'var(--accent)' : 'var(--danger)';
   $('result-text').textContent = text;
   $('result-coins').textContent = earned;
   $('result-exp').textContent = exp;
   $('result-care-line').style.display = gotCare ? 'block' : 'none';
   $('result-care').textContent = gotCare;
-  /* Исправление: «Ещё раз» видна и после проигрыша сюжетной главы */
+  /* «Ещё раз» видна и после проигрыша сюжетной главы */
   lastWasStory = isStoryMode;
   $('btn-result-story').style.display = (win && isStoryMode) ? 'block' : 'none';
   $('btn-result-replay').style.display = (lastMg && lastMg !== 'finale') ? 'block' : 'none';
@@ -1218,7 +1220,7 @@ function initCleaning(){
       if(cleaned >= need){ activeIntervals.forEach(clearInterval); activeIntervals = []; endGame(true, 'Комната сияет чистотой! ✨', 70, 45, 1); }
     };
     area.appendChild(d);
-    setTimeout(()=>{ if(d.parentNode) b.parentNode && b.remove(); }, 1600);
+    setTimeout(()=>{ if(d.parentNode) d.remove(); }, 1600);
   }, 550);
   activeIntervals.push(spawn);
 }
@@ -1285,7 +1287,7 @@ function initTeeth(){
 function initGarden(){
   let picked = 0; const need = 6;
   const c = $('minigame-container');
-  c.innerHTML = '<h2 class="mg-title">Букет для мама</h2><p class="mg-desc">Собери 6 цветков 🌷. Пчёл 🐝 не трогай!</p><div id="bacteria-area"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:60px;pointer-events:none">🧺</div></div><p class="mg-sub" id="gd-info">0 / ' + need + '</p>';
+  c.innerHTML = '<h2 class="mg-title">Букет для мамы</h2><p class="mg-desc">Собери 6 цветков 🌷. Пчёл 🐝 не трогай!</p><div id="bacteria-area"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:60px;pointer-events:none">🧺</div></div><p class="mg-sub" id="gd-info">0 / ' + need + '</p>';
   let tLeft = 30; setHudTimer('30с');
   const tick = setInterval(()=>{
     tLeft--; setHudTimer(tLeft + 'с');
@@ -1490,7 +1492,7 @@ function renderDailyTasks(){
   list.innerHTML = '';
   $('ui-streak').textContent = state.streak;
   $('ui-best-streak').textContent = state.bestStreak;
-  /* Исправление: подарок обновляется всегда, даже если заданий нет */
+  /* Подарок обновляется всегда, даже если заданий на день нет */
   const giftReady = state.giftDate !== new Date().toDateString();
   const g = GIFTS[Math.min(state.giftDay, 4)];
   $('gift-info').textContent = giftReady ? 'Сегодня: ' + g.label : 'Подарок уже забран — приходи завтра!';
@@ -1721,6 +1723,7 @@ function checkUrgent(){
   if(state.urgent.end && now >= state.urgent.end){
     state.urgent.end = 0;
     banner.style.display = 'none';
+    saveGame();
     return;
   }
   if(now >= state.urgent.next){
@@ -1732,17 +1735,23 @@ function checkUrgent(){
     toast('Срочный вызов! У тебя 10 минут!', '🚨');
   } else banner.style.display = 'none';
 }
+/* Исправлено: таймер баннера тикает каждую секунду и сам прячет баннер,
+   когда время вышло — раньше он «зависал» навсегда */
 function updateUrgentTimer(){
+  const banner = $('urgent-banner');
   const el = $('urgent-timer');
-  if(!el || !state.urgent.end) return;
-  const left = Math.max(0, Math.floor((state.urgent.end - Date.now())/1000));
-  if(left <= 0){
-    $('urgent-banner').style.display = 'none';
-    state.urgent.end = 0;
-    saveGame();
+  if(!banner || !el) return;
+  const now = Date.now();
+  if(state.urgent.end && now < state.urgent.end){
+    const left = Math.floor((state.urgent.end - now)/1000);
+    el.textContent = Math.floor(left/60) + ':' + String(left%60).padStart(2,'0');
     return;
   }
-  el.textContent = Math.floor(left/60) + ':' + String(left%60).padStart(2,'0');
+  if(state.urgent.end && now >= state.urgent.end){
+    state.urgent.end = 0;
+    saveGame();
+  }
+  banner.style.display = 'none';
 }
 function playUrgent(){
   if(!state.urgent.end || Date.now() > state.urgent.end){ toast('Вызов уже закончился!', '🚨'); return; }
@@ -1949,7 +1958,7 @@ function toggleMusic(){
     musicStart();
     toast('Музыка включена', '🎵');
   } else {
-    /* Исправление: гасим оба трека одним таймером, а не двумя */
+    /* Гасим оба трека одним таймером, а не двумя */
     const a = $('music-a'), b = $('music-b');
     if(musicFadeTimer) clearInterval(musicFadeTimer);
     const steps = 10;
@@ -2035,6 +2044,8 @@ window.addEventListener('load', ()=>{
   loadSmartImg('doctor-photo', ['welcome_doctor.jpg','welcome_doctor.jpeg','welcome_doctor.png']);
   updateUI();
   setInterval(updateRestBtn, 15000);
+  /* Таймер срочного вызова: тикает раз в секунду, баннер сам исчезает по истечении времени */
+  setInterval(updateUrgentTimer, 1000);
   initMusicCycle();
   loadArinaPhoto();
   const startMusic = ()=>{
@@ -2064,4 +2075,10 @@ function loadSmartImg(imgId, variants){
     if(twin) twin.style.display = 'none';
   };
   next();
+}
+
+/* =================== О ПРОГРАММЕ =================== */
+function showAbout(){ showScreen('screen-about'); }
+function openTelegram(){
+  window.open('https://t.me/Neymar808', '_blank');
 }
