@@ -6,7 +6,7 @@
 <title>Аринка: История Выздоровления 5.0</title>
 <link rel="stylesheet" href="style.css">
 </head>
-<body class="theme-light">
+<body>
 
 <!-- ===== ПРИВЕТСТВИЕ ===== -->
 <div id="welcome-screen">
@@ -15,9 +15,9 @@
   </div>
   <div class="welcome-content">
     <div class="welcome-emoji" id="welcome-emoji" onclick="tapWelcome()">
-  <span id="welcome-emoji-txt">👩‍⚕️</span>
-  <img id="doctor-photo" src="welcome_doctor.jpg" alt="Доктор" style="display:none">
-</div>
+      <span id="welcome-emoji-txt">👩‍⚕️</span>
+      <img id="doctor-photo" src="welcome_doctor.jpg" alt="Доктор" style="display:none">
+    </div>
     <h1>Аринка</h1>
     <p class="welcome-sub">🌸 История выздоровления 🌸</p>
     <p class="welcome-tag">Одна ранка. Один герой. 30 глав заботы.</p>
@@ -49,9 +49,9 @@
       <div class="menu-header">
         <div class="avatar-wrap">
           <div class="avatar-img">
-  <span class="avatar-emoji" id="ui-avatar">👧</span>
-  <img id="avatar-photo" src="arina.jpg" alt="Аринка" style="display:none">
-</div>
+            <span class="avatar-emoji" id="ui-avatar">👧</span>
+            <img id="avatar-photo" src="arina.jpg" alt="Аринка" style="display:none">
+          </div>
           <span class="avatar-bow" id="ui-bow">🎀</span>
           <span class="menu-cat" onclick="tapCat()">🐱</span>
         </div>
@@ -89,7 +89,10 @@
         <div class="plx-layer plx-flowers" id="plx-flowers">
           <span>🌷</span><span>🌿</span><span>🌷</span><span>🌿</span><span>🌷</span><span>🌿</span>
         </div>
-        <div class="character" id="char-emoji">👧</div>
+        <div class="char-emoji">
+          <span id="char-emoji">👧</span>
+          <img id="char-img" alt="" style="display:none">
+        </div>
       </div>
       <div class="dialog-box">
         <div class="speaker" id="dialog-name">Аринка</div>
@@ -268,11 +271,13 @@
   <div id="fx-layer"></div>
   <div id="toast-layer"></div>
   <div id="modal-layer" onclick="closeModal()"></div>
+
+  <!-- КНОПКА МУЗЫКИ: теперь внутри игрового контейнера -->
+  <button class="music-btn" id="music-btn" onclick="toggleMusic()">🔊</button>
 </div>
 
-<script src="game.js"></script>
 <audio id="music-a" src="music_day.mp3" preload="auto"></audio>
 <audio id="music-b" src="music_night.mp3" preload="auto"></audio>
-<button class="music-btn" id="music-btn" onclick="toggleMusic()">🔊</button>
+<script src="game.js"></script>
 </body>
 </html>
