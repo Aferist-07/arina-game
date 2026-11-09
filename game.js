@@ -62,6 +62,14 @@ function regenEnergy(){
 }
 setInterval(regenEnergy, 20000);
 
+/* Исправление: единая функция траты энергии — сбрасывает таймер регена,
+   если энергия была полной, иначе реген «дарил» бы энергию с прошлого раза */
+function spendEnergy(n){
+  n = n || 1;
+  if(state.energy >= state.maxEnergy) state.lastEnergyTs = Date.now();
+  state.energy = Math.max(0, state.energy - n);
+}
+
 /* =================== ТЕМЫ =================== */
 const THEMES = [
   {id:'light',   label:'🌸 День'},
@@ -289,7 +297,7 @@ const storyData = {
     {who:'doctor', text:'Лекарство горькое, но нужное. Договорились принимать?'}],
     choice:{prompt:'Что ответишь доктору?', options:[
       {text:'👍 Буду слушаться!', sub:'Честность лечит. +3 💝', apply:()=>addCare(3)},
-      {text:'🤫 Спрячу таблетку', sub:'Хитрость не лечит. −1 ⚡', apply:()=>{ state.energy = Math.max(0, state.energy-1); toast('Хитрость отложила выздоровление…', '😮‍💨'); }}
+      {text:'🤫 Спрячу таблетку', sub:'Хитрость не лечит. −1 ⚡', apply:()=>{ toast('Хитрость отложила выздоровление…', '😮‍💨'); }}
     ]}},
   13:{lines:()=>[
     {who:'arina', text:'В школе будут спрашивать про здоровье. Потренируемся?'},
@@ -369,6 +377,7 @@ function startStory(){
     showMinigames();
     return;
   }
+  spendEnergy(); /* Исправление: глава теперь честно стоит 1 ⚡ */
   curCh = storyData[state.chapter];
   dialogLines = curCh.lines();
   dialogIdx = 0;
@@ -381,6 +390,7 @@ function renderLine(){
   $('dialog-name').textContent = npc.name;
   $('dialog-text').textContent = line.text.replace('%NAME%', state.name);
   $('char-emoji').textContent = line.who === 'arina' ? arinaEmoji() : npc.emoji;
+  setCharPhoto(line.who);
   const last = dialogIdx >= dialogLines.length - 1;
   if(curCh.choice && last){
     $('btn-next-dialog').style.display = 'none';
@@ -410,8 +420,7 @@ function renderChoices(){
     btn.innerHTML = op.text + '<small>' + op.sub + '</small>';
     btn.onclick = ()=>{
       op.apply();
-      state.energy = Math.max(0, state.energy - 1);
-      state.lastEnergyTs = state.lastEnergyTs || Date.now();
+      /* Исправление: энергию уже сняли в startStory — двойного списания больше нет */
       if(state.chapter >= 30){ finishStory(); }
       else { state.chapter++; progressTask('chapter', 1); }
       checkAchievements();
@@ -445,14 +454,20 @@ function initParallax(){
     $('plx-clouds').style.transform = '';
   });
 }
+
 /* =================== ЯДРО МИНИ-ИГР =================== */
 let activeTimer = null, activeIntervals = [], mgActive = false;
 let lastMg = null, isStoryMode = false, bossMode = false, urgentRun = false;
+let sliderActive = false, breathActive = false, breathRaf = null;
 
 function cleanupMinigame(){
   if(activeTimer) cancelAnimationFrame(activeTimer);
   activeIntervals.forEach(i=>clearInterval(i));
   activeIntervals = []; activeTimer = null; mgActive = false;
+  /* Исправление: ползунок и дыхание больше не «живут» после выхода из игры */
+  sliderActive = false;
+  breathActive = false;
+  if(breathRaf){ cancelAnimationFrame(breathRaf); breathRaf = null; }
   $('minigame-container').innerHTML = '';
   $('mg-timer').textContent = '⏱ —';
   $('mg-score').textContent = '⭐ 0';
@@ -462,7 +477,7 @@ function setHudScore(s){ $('mg-score').textContent = '⭐ ' + s; }
 
 function startMinigame(type){
   if(!isStoryMode && state.energy <= 0){ toast('Нет энергии!', '⚡'); return; }
-  if(!isStoryMode) state.energy--;
+  if(!isStoryMode) spendEnergy();
   lastMg = type;
   bossMode = isStoryMode && curCh && curCh.boss;
   cleanupMinigame();
@@ -609,7 +624,7 @@ function initBacteria(isClean){
 }
 
 /* --- 3. Термометр --- */
-let sliderX = 0, sliderDir = 1, sliderActive = false, tempTarget = {left:45, width:12}, tempTries = 3, tempSpeed = 1.6;
+let sliderX = 0, sliderDir = 1, tempTarget = {left:45, width:12}, tempTries = 3, tempSpeed = 1.6;
 function initTemp(){
   tempTries = 3;
   tempSpeed = bossMode ? 2.6 : 1.6;
@@ -626,7 +641,7 @@ function initTemp(){
   animateSlider();
 }
 function animateSlider(){
-  if(!sliderActive) return;
+  if(!sliderActive || !mgActive) return;
   sliderX += sliderDir * tempSpeed;
   if(sliderX > 100){ sliderX = 100; sliderDir = -1; }
   if(sliderX < 0){ sliderX = 0; sliderDir = 1; }
@@ -955,7 +970,7 @@ function initDosage(){
 }
 
 /* --- 12. Дыхательная гимнастика --- */
-let breathActive = false, breathVal = 0, breathZone = {left:55, width:15}, breathRound = 0, breathRaf = null;
+let breathVal = 0, breathZone = {left:55, width:15}, breathRound = 0;
 function initBreathing(){
   breathRound = 0;
   const c = $('minigame-container');
@@ -995,7 +1010,7 @@ function startBreath(){
 function stopBreath(){
   if(!breathActive) return;
   breathActive = false;
-  if(breathRaf) cancelAnimationFrame(breathRaf);
+  if(breathRaf){ cancelAnimationFrame(breathRaf); breathRaf = null; }
   if(breathVal >= breathZone.left && breathVal <= breathZone.left + breathZone.width){
     breathRound++; setHudScore(breathRound);
     if(breathRound >= 3) endGame(true, 'Дыхание ровное и спокойное! 🌬️', 75, 45, 1);
@@ -1203,7 +1218,7 @@ function initClock(){
     + '<div class="temp-hearts" id="clock-hearts">Попытки: ❤️❤️❤️</div>';
   x = 0; dir = 1; sliderActive = true;
   const animate = ()=>{
-    if(!sliderActive) return;
+    if(!sliderActive || !mgActive) return;
     x += dir * 1.8;
     if(x > 100){ x = 100; dir = -1; }
     if(x < 0){ x = 0; dir = 1; }
@@ -1212,6 +1227,7 @@ function initClock(){
   };
   animate();
   window.stopClock = function(){
+    if(!mgActive) return;
     sliderActive = false;
     if(x >= leftPct && x <= leftPct + 10) endGame(true, 'Принято точно по часам! ⏰', 75, 50, 1);
     else {
@@ -1324,6 +1340,7 @@ function renderFreePlay(){
     list.appendChild(btn);
   });
 }
+
 /* =================== МАГАЗИН =================== */
 let shopTab = 'up';
 function setShopTab(tab){
@@ -1412,7 +1429,7 @@ function buyBooster(id, price){
   updateUI();
 }
 
-/* =================== ЗАДАНИЯ И ПОДАРКИ (ИСПРАВЛЕНО) =================== */
+/* =================== ЗАДАНИЯ И ПОДАРКИ =================== */
 const DAILY_POOL = [
   {id:1, text:'Сыграй 3 мини-игры', type:'game', target:3, reward:50},
   {id:2, text:'Заработай 100 монет', type:'coins', target:100, reward:60},
@@ -1456,6 +1473,13 @@ function renderDailyTasks(){
   list.innerHTML = '';
   $('ui-streak').textContent = state.streak;
   $('ui-best-streak').textContent = state.bestStreak;
+  /* Исправление: подарок обновляется всегда, даже если заданий нет */
+  const giftReady = state.giftDate !== new Date().toDateString();
+  const g = GIFTS[Math.min(state.giftDay, 4)];
+  $('gift-info').textContent = giftReady ? 'Сегодня: ' + g.label : 'Подарок уже забран — приходи завтра!';
+  const gbtn = $('gift-btn');
+  gbtn.disabled = !giftReady;
+  gbtn.style.opacity = giftReady ? '1' : '.5';
   if(!state.dailyTasks || !state.dailyTasks.length){
     list.innerHTML = '<div class="task-item"><div><b>Заданий пока нет</b><br><small>Играй — и мама даст задания!</small></div></div>';
     return;
@@ -1477,12 +1501,6 @@ function renderDailyTasks(){
     }
     list.appendChild(div);
   });
-  const giftReady = state.giftDate !== new Date().toDateString();
-  const g = GIFTS[Math.min(state.giftDay, 4)];
-  $('gift-info').textContent = giftReady ? 'Сегодня: ' + g.label : 'Подарок уже забран — приходи завтра!';
-  const gbtn = $('gift-btn');
-  gbtn.disabled = !giftReady;
-  gbtn.style.opacity = giftReady ? '1' : '.5';
 }
 function claimTask(id){
   const t = state.dailyTasks.find(x=>x.id === id);
@@ -1582,7 +1600,6 @@ function readArticle(i){
   }
 }
 
-
 /* =================== НАГРАДЫ ЗАБОТЫ =================== */
 const CARE_REWARDS = [
   {id:'sticker',    name:'🌸 Наклейка «Смелость»',  cost:5,  desc:'Первая награда за заботу'},
@@ -1637,7 +1654,7 @@ function renderRecords(){
 function startRecord(){
   if(state.energy <= 0){ toast('Нет энергии!', '⚡'); return; }
   isStoryMode = false; curCh = null;
-  state.energy--;
+  spendEnergy();
   lastMg = 'vitamins';
   updateUI();
   cleanupMinigame();
@@ -1718,7 +1735,7 @@ function playUrgent(){
   startMinigame(pick(URGENT_GAMES));
 }
 
-/* =================== СЕКРЕТЫ И ТАПЫ (КОТ ИСПРАВЛЕН) =================== */
+/* =================== СЕКРЕТЫ И ТАПЫ =================== */
 const SECRET_CODES = {ARINA:'code_arina'};
 const SECRETS = [
   {id:'shadow',     name:'Кто под шляпой?',  hint:'5 раз дотронься до тени под Аринкой'},
@@ -1768,7 +1785,7 @@ function renderSecrets(){
   });
 }
 
-/* =================== НАСТРОЙКИ (ТЕМЫ ИСПРАВЛЕНЫ) =================== */
+/* =================== НАСТРОЙКИ =================== */
 function renderThemes(){
   const grid = $('theme-buttons');
   if(!grid) return;
@@ -1820,7 +1837,7 @@ function resetProgress(){
   }
 }
 
-/* =================== ОТДЫХ (ЭНЕРГИЯ) =================== */
+/* =================== ОТДЫХ =================== */
 function claimRest(){
   const now = Date.now();
   const cd = 30*60000;
@@ -1887,7 +1904,6 @@ function updateUI(){
   applyTheme();
   checkUrgent();
   saveGame();
-
 }
 
 /* =================== МУЗЫКА (2 ТРЕКА ПО ОЧЕРЕДИ) =================== */
@@ -1896,7 +1912,7 @@ let musicOn = false, musicCur = null, musicFadeTimer = null;
 function musicStart(){
   if(musicCur && !musicCur.paused) return;
   const a = $('music-a'), b = $('music-b');
-  a.volume = 0; b.volume = 0;
+  a.volume = 0;
   musicCur = a;
   musicCur.play().catch(()=>{});
   fadeTo(musicCur, 0.35, 1500);
@@ -1917,13 +1933,21 @@ function toggleMusic(){
     musicStart();
     toast('Музыка включена', '🎵');
   } else {
-    fadeTo($('music-a'), 0, 500);
-    fadeTo($('music-b'), 0, 500);
-    setTimeout(()=>{
-      $('music-a').pause(); $('music-b').pause();
-      $('music-a').currentTime = 0; $('music-b').currentTime = 0;
-      musicCur = null;
-    }, 550);
+    /* Исправление: гасим оба трека одним таймером, а не двумя */
+    const a = $('music-a'), b = $('music-b');
+    if(musicFadeTimer) clearInterval(musicFadeTimer);
+    const steps = 10;
+    let n = 0;
+    musicFadeTimer = setInterval(()=>{
+      a.volume = Math.max(0, a.volume - 0.35/steps);
+      b.volume = Math.max(0, b.volume - 0.35/steps);
+      if(++n >= steps){
+        clearInterval(musicFadeTimer);
+        a.pause(); b.pause();
+        a.currentTime = 0; b.currentTime = 0;
+        musicCur = null;
+      }
+    }, 500 / steps);
     musicOn = false;
     $('music-btn').textContent = '🔇';
   }
@@ -1946,9 +1970,38 @@ function switchTo(next){
   next.play().catch(()=>{});
   setTimeout(()=>fadeTo(next, 0.35, 1800), 300);
   musicCur = next;
-  prev.pause && setTimeout(()=>{ if(musicCur !== prev) prev.pause(); }, 2000);
+  setTimeout(()=>{ if(musicCur !== prev) prev.pause(); }, 2000);
 }
 
+/* =================== ФОТО АРИНКИ В ДИАЛОГАХ =================== */
+const ARINA_PHOTOS = ['npc_arina.png','npc_arina.jpg','npc_arina.jpeg','arina.png','arina.jpg'];
+let arinaPhoto = null;
+function loadArinaPhoto(){
+  const probe = new Image();
+  let i = 0;
+  const next = ()=>{
+    if(i >= ARINA_PHOTOS.length) return;
+    probe.onerror = next;
+    probe.src = ARINA_PHOTOS[i] + '?v=' + Date.now();
+    i++;
+  };
+  probe.onload = ()=>{ arinaPhoto = probe.src.split('?')[0]; };
+  next();
+}
+function setCharPhoto(who){
+  const img = $('char-img'), emoji = $('char-emoji');
+  if(!img || !emoji) return;
+  if(who === 'arina' && arinaPhoto){
+    if(img.getAttribute('src') !== arinaPhoto) img.src = arinaPhoto;
+    img.style.display = 'block';
+    img.style.opacity = '1';
+    img.style.filter = 'none';
+    emoji.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    emoji.style.display = 'block';
+  }
+}
 
 /* =================== ЗАПУСК =================== */
 function closeWelcome(){
@@ -1962,11 +2015,12 @@ window.addEventListener('load', ()=>{
   checkDailyReset();
   initRef();
   $('name-input').value = state.name === 'Игрок' ? '' : state.name;
-    loadSmartImg('avatar-photo', ['arina.jpg','arina.jpeg','arina.png']);
+  loadSmartImg('avatar-photo', ['arina.jpg','arina.jpeg','arina.png']);
   loadSmartImg('doctor-photo', ['welcome_doctor.jpg','welcome_doctor.jpeg','welcome_doctor.png']);
   updateUI();
-    setInterval(updateRestBtn, 15000);
-    initMusicCycle();
+  setInterval(updateRestBtn, 15000);
+  initMusicCycle();
+  loadArinaPhoto();
   const startMusic = ()=>{
     if(!musicOn) musicStart();
     document.removeEventListener('pointerdown', startMusic);
@@ -1975,6 +2029,7 @@ window.addEventListener('load', ()=>{
   startPetals();
   setTimeout(closeWelcome, 6000);
 });
+
 /* =================== УМНАЯ ЗАГРУЗКА ФОТО =================== */
 function loadSmartImg(imgId, variants){
   const img = $(imgId);
