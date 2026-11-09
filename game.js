@@ -252,7 +252,7 @@ function renderCabinet(){
     : 'Прогресс лечения: ' + pct + '% (глава ' + state.chapter + ' из 30)';
 }
 
-/* =================== СЮЖЕТ (30 ГЛАВ, БЕЗ ПОВТОРОВ) =================== */
+/* =================== СЮЖЕТ (30 ГЛАВ) =================== */
 const path = (home, clinic) => state.storyPath === 'clinic' ? clinic : home;
 
 const storyData = {
@@ -367,7 +367,6 @@ const storyData = {
     ];
   }, mg:'finale'}
 };
-
 /* =================== ДВИЖОК ДИАЛОГОВ =================== */
 let dialogLines = [], dialogIdx = 0, curCh = null;
 function startStory(){
@@ -377,8 +376,8 @@ function startStory(){
     showMinigames();
     return;
   }
-  isStoryMode = true;
-  state.energy--;
+  isStoryMode = true;                     /* Исправление: сюжетный режим включается */
+  state.energy--;                          /* Исправление: глава стоит 1 ⚡ */
   state.lastEnergyTs = state.lastEnergyTs || Date.now();
   curCh = storyData[state.chapter];
   dialogLines = curCh.lines();
@@ -459,7 +458,8 @@ function initParallax(){
 
 /* =================== ЯДРО МИНИ-ИГР =================== */
 let activeTimer = null, activeIntervals = [], mgActive = false;
-let lastMg = null, isStoryMode = false, bossMode = false, urgentRun = false;
+/* Исправление: добавлена lastWasStory — помнит, что проигранная игра была сюжетной */
+let lastMg = null, isStoryMode = false, bossMode = false, urgentRun = false, lastWasStory = false;
 let sliderActive = false, breathActive = false, breathRaf = null;
 
 function cleanupMinigame(){
@@ -527,20 +527,35 @@ function endGame(win, text, coins, exp, care){
   }
   checkAchievements();
   updateUI();
-  $('result-title').textContent = win ? 'Победа!' : 'Не вышло';
+  $('result-title').textContent = win ? 'Победа!' : 'Не вышlo';
   $('result-title').style.color = win ? 'var(--accent)' : 'var(--danger)';
   $('result-text').textContent = text;
   $('result-coins').textContent = earned;
   $('result-exp').textContent = exp;
   $('result-care-line').style.display = gotCare ? 'block' : 'none';
   $('result-care').textContent = gotCare;
+  /* Исправление: «Ещё раз» видна и после проигрыша сюжетной главы */
+  lastWasStory = isStoryMode;
   $('btn-result-story').style.display = (win && isStoryMode) ? 'block' : 'none';
-  $('btn-result-replay').style.display = (!isStoryMode && lastMg) ? 'block' : 'none';
+  $('btn-result-replay').style.display = (lastMg && lastMg !== 'finale') ? 'block' : 'none';
   isStoryMode = false; bossMode = false;
   showScreen('screen-result');
 }
 function replayMinigame(){
-  if(lastMg && lastMg !== 'finale'){ isStoryMode = false; curCh = null; startMinigame(lastMg); }
+  if(!lastMg || lastMg === 'finale') return;
+  if(lastWasStory && !state.storyDone){
+    /* Повтор сюжетной главы: энергия уже потрачена при первом заходе */
+    isStoryMode = true;
+    bossMode = false;
+    curCh = storyData[state.chapter];
+    dialogLines = curCh.lines();
+    dialogIdx = 0;
+    showScreen('screen-dialog');
+    renderLine();
+    return;
+  }
+  isStoryMode = false; curCh = null;
+  startMinigame(lastMg);
 }
 function abortMinigame(){
   cleanupMinigame();
@@ -1203,7 +1218,7 @@ function initCleaning(){
       if(cleaned >= need){ activeIntervals.forEach(clearInterval); activeIntervals = []; endGame(true, 'Комната сияет чистотой! ✨', 70, 45, 1); }
     };
     area.appendChild(d);
-    setTimeout(()=>{ if(d.parentNode) d.remove(); }, 1600);
+    setTimeout(()=>{ if(d.parentNode) b.parentNode && b.remove(); }, 1600);
   }, 550);
   activeIntervals.push(spawn);
 }
@@ -1270,7 +1285,7 @@ function initTeeth(){
 function initGarden(){
   let picked = 0; const need = 6;
   const c = $('minigame-container');
-  c.innerHTML = '<h2 class="mg-title">Букет для мамы</h2><p class="mg-desc">Собери 6 цветков 🌷. Пчёл 🐝 не трогай!</p><div id="bacteria-area"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:60px;pointer-events:none">🧺</div></div><p class="mg-sub" id="gd-info">0 / ' + need + '</p>';
+  c.innerHTML = '<h2 class="mg-title">Букет для мама</h2><p class="mg-desc">Собери 6 цветков 🌷. Пчёл 🐝 не трогай!</p><div id="bacteria-area"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:60px;pointer-events:none">🧺</div></div><p class="mg-sub" id="gd-info">0 / ' + need + '</p>';
   let tLeft = 30; setHudTimer('30с');
   const tick = setInterval(()=>{
     tLeft--; setHudTimer(tLeft + 'с');
@@ -1528,7 +1543,6 @@ function claimGift(){
   checkAchievements();
   updateUI();
 }
-
 /* =================== ДОСТИЖЕНИЯ =================== */
 const ACH = [
   {id:'first', name:'Первый шаг', desc:'Сыграй 1 игру', check:s=>s.stats.games >= 1},
@@ -2051,4 +2065,3 @@ function loadSmartImg(imgId, variants){
   };
   next();
 }
-
