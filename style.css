@@ -48,7 +48,7 @@ body{display:flex;justify-content:center;align-items:center;height:100vh;backgro
 .main-btn.warning{background:linear-gradient(90deg,#FF9800,#FF5722)}
 .main-btn.success{background:linear-gradient(90deg,#4CAF50,#8BC34A)}
 .main-btn.danger{background:linear-gradient(90deg,#F44336,#D32F2F)}
-.main-btn.small{padding:8px 15px;font-size:14px;margin:0;width:auto}
+.main-btn.small{padding:8px 15px;font-size:14px;margin:0 0 10px 0;width:auto}
 .main-btn:disabled{opacity:.5}
 .back-btn{background:var(--card);border:none;padding:8px 15px;border-radius:10px;color:var(--primary);font-weight:bold;cursor:pointer;box-shadow:0 2px 5px var(--shadow)}
 .skip-btn{color:var(--accent)}
@@ -57,6 +57,7 @@ body{display:flex;justify-content:center;align-items:center;height:100vh;backgro
 .menu-header{text-align:center;margin-bottom:18px;display:flex;flex-direction:column;align-items:center}
 .avatar-wrap{position:relative;margin-bottom:8px}
 .avatar-img{width:120px;height:120px;border-radius:50%;border:4px solid var(--primary);display:flex;justify-content:center;align-items:center;font-size:64px;box-shadow:0 5px 15px var(--shadow);background:var(--border);position:relative;overflow:hidden}
+.avatar-img img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
 .avatar-emoji{animation:breathe 2.6s ease-in-out infinite;display:block}
 @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 .avatar-bow{position:absolute;top:6px;right:8px;font-size:26px;display:none}
@@ -101,6 +102,11 @@ body{display:flex;justify-content:center;align-items:center;height:100vh;backgro
 .choices-container{display:flex;flex-direction:column;gap:10px;margin-bottom:15px}
 .choice-btn{background:var(--card);border:2px solid var(--primary);color:var(--text-main);padding:12px;border-radius:14px;font-size:15px;font-weight:bold;cursor:pointer;text-align:left}
 .choice-btn small{display:block;font-weight:normal;color:var(--text-sub);margin-top:2px}
+
+/* Персонаж в диалогах: эмодзи и фото */
+.char-emoji{display:flex;justify-content:center;align-items:center;min-height:150px}
+#char-emoji{font-size:110px;line-height:1;opacity:1 !important;animation:none;filter:none}
+#char-img{width:130px;height:130px;object-fit:cover;border-radius:50%;box-shadow:0 3px 12px var(--shadow);opacity:1 !important;animation:none;filter:none}
 
 /* ============ HUD ============ */
 .hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:6px}
@@ -198,8 +204,8 @@ body{display:flex;justify-content:center;align-items:center;height:100vh;backgro
 /* ============ КАБИНЕТ ============ */
 .cabinet-card{background:var(--card);padding:20px;border-radius:20px;box-shadow:0 4px 14px var(--shadow);text-align:center}
 .cabinet-card h3{color:var(--primary);margin:10px 0 6px}
-.hand-frame{width:min(340px,85vw);height:min(340px,85vw);margin:10px auto;position:relative;border-radius:20px;background:var(--border);overflow:hidden;box-shadow:0 4px 12px var(--shadow)}
-.hand-frame img{width:100%;height:100%;object-fit:cover;display:block}
+.hand-frame{width:min(340px,85vw);height:min(340px,85vw);margin:10px auto;position:relative;border-radius:20px;background:var(--card);overflow:hidden;box-shadow:0 4px 12px var(--shadow)}
+.hand-frame img{width:100%;height:100%;object-fit:cover;display:block;opacity:1 !important;filter:none}
 .hand-frame div{width:100%;height:100%;justify-content:center;align-items:center;font-size:110px;display:none}
 .badge{display:inline-block;padding:6px 14px;border-radius:20px;font-weight:bold;color:#fff;font-size:14px;margin-bottom:8px}
 .badge.sick{background:var(--danger)}
@@ -217,7 +223,8 @@ body{display:flex;justify-content:center;align-items:center;height:100vh;backgro
 #welcome-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#FFE4EC 0%,#C86DD7 55%,#8A6DFF 100%);z-index:9999;display:flex;justify-content:center;align-items:center;transition:opacity .6s;overflow:hidden}
 #welcome-screen.hidden{opacity:0;pointer-events:none}
 .welcome-content{text-align:center;color:#fff;position:relative;z-index:2;padding:20px}
-.welcome-emoji{font-size:100px;animation:pulse 1.5s infinite;margin-bottom:20px;cursor:pointer;display:inline-block}
+.welcome-emoji{font-size:100px;animation:pulse 1.5s infinite;margin-bottom:20px;cursor:pointer;display:inline-block;position:relative;width:110px;height:110px}
+.welcome-emoji img{position:absolute;top:0;left:0;width:110px;height:110px;object-fit:cover;border-radius:50%;display:block}
 .welcome-content h1{font-size:52px;text-shadow:0 4px 20px rgba(0,0,0,.35);margin-bottom:6px}
 .welcome-sub{font-size:20px;font-weight:bold;margin-bottom:10px}
 .welcome-tag{font-size:16px;opacity:.9;margin-bottom:14px}
@@ -237,11 +244,11 @@ body{display:flex;justify-content:center;align-items:center;height:100vh;backgro
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
 .loading-dots span{font-size:40px;animation:blink 1.4s infinite}
 @keyframes blink{0%,100%{opacity:.2}20%{opacity:1}}
-.avatar-img img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.welcome-emoji img{width:100px;height:100px;object-fit:cover;border-radius:50%;display:block}
-.avatar-img img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
-.avatar-img{position:relative}
-.welcome-emoji img{width:110px;height:110px;object-fit:cover;border-radius:50%;display:block}
-.main-btn.small{margin:0 0 10px 0;width:auto}
+
+/* ============ МУЗЫКА ============ */
 .music-btn{position:absolute;bottom:12px;right:12px;z-index:5000;width:44px;height:44px;border:none;border-radius:50%;background:var(--card);box-shadow:0 3px 10px var(--shadow);font-size:20px;cursor:pointer}
+/* ПЕРСОНАЖ В ДИАЛОГЕ: поверх фона и без прозрачности */
+.char-emoji{position:relative;z-index:3;display:flex;justify-content:center;align-items:center;min-height:150px}
+#char-emoji{font-size:110px;line-height:1;opacity:1 !important;animation:none;filter:none}
+#char-img{width:130px;height:130px;object-fit:cover;border-radius:50%;box-shadow:0 3px 12px var(--shadow);opacity:1 !important;animation:none;filter:none;mix-blend-mode:normal !important}
 
